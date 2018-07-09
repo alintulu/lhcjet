@@ -24,33 +24,97 @@ void reformatData() {
   // ATLAS 7 TeV, R=0.4 and R=0.6, 4.5/fb
   // https://www.hepdata.net/download/submission/ins1325553/1/root
   TFile *fa7 = new TFile("atlas/HEPData-ins1325553-v1-root.root","READ");
-  assert(fa7 && !f7->IsZombie());
+  assert(fa7 && !fa7->IsZombie());
+
+  f->cd();
+  TDirectory *sda7_stat = f->mkdir("atlas07_sys");
 
   for (int i = 0; i != 12; ++i) {
-    
-    TGraphAsymmErrors *g = (TGraphAsymmErrors*)fa7->Get(Form("Table %d/Graph1D_y1",i+1));
-    assert(g);
 
-    if (i<6) g->SetName(Form("atlas07_r04_y%02d-%02d",5*i,5*(i+1)));
-    else     g->SetName(Form("atlas07_r06_y%02d-%02d",5*(i-6),5*(i-6+1)));
+    string title;
+    if (i<6) title = Form("atlas07_r04_y%02d-%02d",5*i,5*(i+1));
+    else     title = Form("atlas07_r06_y%02d-%02d",5*(i-6),5*(i-6+1));
 
-    TH1D *hs = (TH1D*)fa7->Get(Form("Table %d/Hist1D_y1_e1",i+1));
-    assert(hs);
+    fa7->cd();
+    //Enter subdirectory
+    fa7->cd(Form("Table %d",i+1));
 
-    TGraphAsymmErrors *gs = (TGraphAsymmErrors*)g->Clone(Form("%s_stat",g->GetName()));
-    for (int i = 0; i != gs->GetN(); ++i) {
-      double x = gs->GetX()[i];
-      int ix = hs->FindBin(x);
-      double ex = 0.5*hs->GetBinWidth(ix);
-      double ey = hs->GetBinError(ix);
-      gs->SetPointError(i, ex,ex, ey,ey);
-    }
-    
-    f->cd();
-    g->Write();
-    gs->Write();
+    //Iterate over entries in subdirectory
+    TIter next (gDirectory->GetListOfKeys());
+    TKey *key;
+
+    string name;
+    char index;
+    int pos;
+    string end;
+
+    while ((key = (TKey*)next())) {
+
+      //If Graph
+      if (!strcmp(key->GetClassName(),"TGraphAsymmErrors")) {
+
+	name = key->GetName();
+	index = name[9];
+	
+	TGraphAsymmErrors *g = (TGraphAsymmErrors*)key->ReadObj();
+	assert(g);
+
+	g->SetName(Form("%s_%c",title.c_str(),index));
+
+	TH1D *hs = (TH1D*)fa7->Get(Form("Table %d/Hist1D_y1_e1",i+1));
+	assert(hs);
+
+	TGraphAsymmErrors *gs = (TGraphAsymmErrors*)g->Clone(Form("%s_stat",g->GetName()));
+	for (int i = 0; i != gs->GetN(); ++i) {
+	  double x = gs->GetX()[i];
+	  int ix = hs->FindBin(x);
+	  double ex = 0.5*hs->GetBinWidth(ix);
+	  double ey = hs->GetBinError(ix);
+	  gs->SetPointError(i, ex,ex, ey,ey);
+	}
+
+	//Write it in main folder
+	f->cd();
+	g->Write();
+	gs->Write();
+	
+      }
+      
+
+      //If Histogram
+      if (!strcmp(key->GetClassName(),"TH1F")) {
+
+	name = key->GetName();
+	index = name[8];
+
+	TH1F *hs = (TH1F*)key->ReadObj();
+	assert(hs);
+
+	if (name.length() == 9) {
+
+	  hs->SetName(Form("%s_%c_sys",title.c_str(),index));
+	  
+	} else {
+
+	  end = name.substr(11);
+
+	  hs->SetName(Form("%s_%c_sys_%s",title.c_str(),index,end.c_str()));
+
+	}
+
+	//Write it in subdirectory
+	f->cd();
+	gDirectory->cd("atlas07_sys");
+	hs->Write();
+
+
+      }
+
+   }
+
+
   }
-
+ 
   // CMS 7 TeV, R=0.5 and R=0.7, 5.0/fb
   // https://www.hepdata.net/download/submission/ins1298810/1/root
   // (+uncertainty tables from Resources:
@@ -58,31 +122,94 @@ void reformatData() {
   TFile *fc7 = new TFile("cms/HEPData-ins1298810-v1-root.root","READ");
   assert(fc7 && !fc7->IsZombie());
 
+  f->cd();
+  
+  TDirectory *sdc7_sys = f->mkdir("cms07_sys");
+
   for (int i = 0; i != 12; ++i) {
+
+    string title;
+    if (i<6) title = Form("cms07_r05_y%02d-%02d",5*i,5*(i+1));
+    else     title = Form("cms07_r07_y%02d-%02d",5*(i-6),5*(i-6+1));
+
+    fc7->cd();
+    //Enter subdirectory
+    fc7->cd(Form("Table %d",i+1));
+
+    //Iterate over entries in subdirectory
+    TIter next (gDirectory->GetListOfKeys());
+    TKey *key;
+
+    string name;
+    char index;
+    int pos;
+    string end = "";
+
+    while ((key = (TKey*)next())) {
+
+      //If Graph
+      if (!strcmp(key->GetClassName(),"TGraphAsymmErrors")) {
+
+	name = key->GetName();
+	index = name[9];
+	
+	TGraphAsymmErrors *g = (TGraphAsymmErrors*)key->ReadObj();
+	assert(g);
+
+	g->SetName(Form("%s_%c",title.c_str(),index));
+
+	TH1D *hs = (TH1D*)fc7->Get(Form("Table %d/Hist1D_y1_e1",i+1));
+	assert(hs);
+
+	TGraphAsymmErrors *gs = (TGraphAsymmErrors*)g->Clone(Form("%s_stat",g->GetName()));
+	for (int i = 0; i != gs->GetN(); ++i) {
+	  double x = gs->GetX()[i];
+	  int ix = hs->FindBin(x);
+	  double ex = 0.5*hs->GetBinWidth(ix);
+	  double ey = hs->GetBinError(ix);
+	  gs->SetPointError(i, ex,ex, ey,ey);
+	}
+
+	//Write it in main folder
+	f->cd();
+	g->Write();
+	gs->Write();
+	
+      }
       
-    TGraphAsymmErrors *g = (TGraphAsymmErrors*)fc7->Get(Form("Table %d/Graph1D_y1",i+1));
-    assert(g);
 
-    if (i<6) g->SetName(Form("cms07_r05_y%02d-%02d",5*i,5*(i+1)));
-    else     g->SetName(Form("cms07_r07_y%02d-%02d",5*(i-6),5*(i-6+1)));
-    
-    TH1D *hs = (TH1D*)fc7->Get(Form("Table %d/Hist1D_y1_e1",i+1));
-    assert(hs);
+      //If Histogram
+      if (!strcmp(key->GetClassName(),"TH1F")) {
 
-    TGraphAsymmErrors *gs = (TGraphAsymmErrors*)g->Clone(Form("%s_stat",g->GetName()));
-    for (int i = 0; i != gs->GetN(); ++i) {
-      double x = gs->GetX()[i];
-      int ix = hs->FindBin(x);
-      double ex = 0.5*hs->GetBinWidth(ix);
-      double ey = hs->GetBinError(ix);
-      gs->SetPointError(i, ex,ex, ey,ey);
-    }
+	name = key->GetName();
+	index = name[8];
 
-    f->cd();
-    g->Write();
-    gs->Write();
+	TH1F *hs = (TH1F*)key->ReadObj();
+	assert(hs);
+
+	if (name.length() == 9) {
+
+	  hs->SetName(Form("%s_%c_sys",title.c_str(),index));
+	  
+	} else {
+	  
+	  end = name.substr(11);
+	  hs->SetName(Form("%s_%c_sys_%s",title.c_str(),index,end.c_str()));
+
+	}
+
+	//Write it in subdirectory
+	f->cd();
+	gDirectory->cd("cms07_sys");
+	hs->Write();
+
+      }
+
+   }
+
   }
 
+  /*
 
   // CMS 8 TeV, R=0.5 and R=0.7, 19.7/fb
   // arXiv:1609.05331
@@ -118,6 +245,6 @@ void reformatData() {
     gs->Write();
   }
   
-
+  */
 
 }
