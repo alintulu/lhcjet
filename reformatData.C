@@ -27,6 +27,8 @@ void reformatData() {
   assert(fa7 && !fa7->IsZombie());
 
   f->cd();
+
+  //Folder for systematic uncertainties
   TDirectory *sda7_stat = f->mkdir("atlas07_sys");
 
   for (int i = 0; i != 12; ++i) {
@@ -36,17 +38,20 @@ void reformatData() {
     else     title = Form("atlas07_r06_y%02d-%02d",5*(i-6),5*(i-6+1));
 
     fa7->cd();
-    //Enter subdirectory
     fa7->cd(Form("Table %d",i+1));
 
-    //Iterate over entries in subdirectory
+    //Name of Graph/Histogram
+    string name;
+    //Char of index of Graoṕh/Histogram
+    char index;
+    //Start part of name of systematic uncertainties
+    string start_sys;
+    //End part of name of systematic uncertainties
+    string end_sys;
+
+    //Iterate over entries in Table of fa7
     TIter next (gDirectory->GetListOfKeys());
     TKey *key;
-
-    string name;
-    char index;
-    int pos;
-    string end;
 
     while ((key = (TKey*)next())) {
 
@@ -73,7 +78,7 @@ void reformatData() {
 	  gs->SetPointError(i, ex,ex, ey,ey);
 	}
 
-	//Write it in main folder
+	//Write it into main folder
 	f->cd();
 	g->Write();
 	gs->Write();
@@ -86,23 +91,25 @@ void reformatData() {
 
 	name = key->GetName();
 	index = name[8];
+	start_sys = title.substr(8);
 
 	TH1F *hs = (TH1F*)key->ReadObj();
 	assert(hs);
 
+	//Just a way to get around that some histogram names have lengths less than 11 bytes
 	if (name.length() == 9) {
 
-	  hs->SetName(Form("%s_%c_sys",title.c_str(),index));
+	  hs->SetName(Form("%s_%c_sys",start_sys.c_str(),index));
 	  
 	} else {
 
-	  end = name.substr(11);
+	  end_sys = name.substr(11);
 
-	  hs->SetName(Form("%s_%c_sys_%s",title.c_str(),index,end.c_str()));
+	  hs->SetName(Form("%s_%c_sys_%s",start_sys.c_str(),index,end_sys.c_str()));
 
 	}
 
-	//Write it in subdirectory
+	//Write it into subdirectory
 	f->cd();
 	gDirectory->cd("atlas07_sys");
 	hs->Write();
@@ -124,6 +131,7 @@ void reformatData() {
 
   f->cd();
   
+  //Folder for systematic uncertainties
   TDirectory *sdc7_sys = f->mkdir("cms07_sys");
 
   for (int i = 0; i != 12; ++i) {
@@ -133,17 +141,20 @@ void reformatData() {
     else     title = Form("cms07_r07_y%02d-%02d",5*(i-6),5*(i-6+1));
 
     fc7->cd();
-    //Enter subdirectory
     fc7->cd(Form("Table %d",i+1));
 
-    //Iterate over entries in subdirectory
+    //Name of Graph/Histogram
+    string name;
+    //Char of index of Graoṕh/Histogram
+    char index;
+    //Start part of name of systematic uncertainties
+    string start_sys;
+    //End part of name of systematic uncertainties
+    string end_sys;
+
+    //Iterate over entries in Table in fc7
     TIter next (gDirectory->GetListOfKeys());
     TKey *key;
-
-    string name;
-    char index;
-    int pos;
-    string end = "";
 
     while ((key = (TKey*)next())) {
 
@@ -170,7 +181,7 @@ void reformatData() {
 	  gs->SetPointError(i, ex,ex, ey,ey);
 	}
 
-	//Write it in main folder
+	//Write it into main folder
 	f->cd();
 	g->Write();
 	gs->Write();
@@ -183,22 +194,24 @@ void reformatData() {
 
 	name = key->GetName();
 	index = name[8];
+	start_sys = title.substr(8);
 
 	TH1F *hs = (TH1F*)key->ReadObj();
 	assert(hs);
 
+	//Just a way to get around that some histogram names have lengths less than 11 bytes
 	if (name.length() == 9) {
 
-	  hs->SetName(Form("%s_%c_sys",title.c_str(),index));
+	  hs->SetName(Form("%s_%c_sys",start_sys.c_str(),index));
 	  
 	} else {
 	  
-	  end = name.substr(11);
-	  hs->SetName(Form("%s_%c_sys_%s",title.c_str(),index,end.c_str()));
+	  end_sys = name.substr(11);
+	  hs->SetName(Form("%s_%c_sys_%s",start_sys.c_str(),index,end_sys.c_str()));
 
 	}
 
-	//Write it in subdirectory
+	//Write it into subdirectory
 	f->cd();
 	gDirectory->cd("cms07_sys");
 	hs->Write();
